@@ -6,7 +6,9 @@ include $(TOP)/configure/CONFIG
 LIBRARY_IOC += asynInterposeGenicam
 
 # Library Source files
-asynInterposeGenicam_SRCS += asynInterposeGenicam.c
+asynInterposeGenicam_SRCS += asynInterposeGenicam.cpp
+asynInterposeGenicam_SRCS += GenCpPacket.cpp
+#asynInterposeGenicam_SRCS += GenCpTool.cpp
 
 # Link with the asyn and base libraries
 asynInterposeGenicam_LIBS += asyn

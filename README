@@ -1,3 +1,29 @@
-Dribble characters out one   at      a      time
-Handy for controlling devices that assume that a user at a keyboard is
-pecking out the commands to the serial port.
+
+Support for GeniCam compliant cameras w/ GenCP as the serial protocol.
+
+A command line tool is built: bin/$(EPICS_HOST_ARCH)/GenCpTool
+
+GenCpTool Usage: 
+    -h              - Help message
+    --help          - Help message
+    -c N            - channel #
+    --channel N     - channel #
+    -u N            - Unit number (default 0)
+    --unit N        - Unit number (default 0)
+    --readXml fname - Read XML GeniCam file and write to fname
+    --U16 Addr      - Read 16 bit unsigned value from address
+    --U32 Addr      - Read 32 bit unsigned value from address
+    --U64 Addr      - Read 64 bit unsigned value from address
+    --C20 Addr      - Read 20 character string from address
+    --C82 Addr      - Read 82 character string from address, etc for other counts
+    -v              - Verbose
+
+For some cameras, the XML file is in zip format, in which case the
+file is written to fname.zip.
+Extract the file using unzip, and if desired, reformat using xmllint.
+
+Example:
+bin/linux-x86_64/GenCpTool -c 1 -u 0 --readXml goldEye.xml
+unzip goldEye.xml.zip 
+xmllint --format genicam-stdccd.xml  > avtGoldEye008.xml
+

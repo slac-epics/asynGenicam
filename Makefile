@@ -1,7 +1,6 @@
-# Makefile for Asyn asynDribble support
+# Makefile for asynGenicam
 #
-# Created by norume on Thu Sep 17 14:34:38 2009
-# Based on the Asyn devGpib template
+# Based on the Asyn asynDribble interpose module
 
 TOP = .
 include $(TOP)/configure/CONFIG
