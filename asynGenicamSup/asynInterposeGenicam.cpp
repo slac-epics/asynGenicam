@@ -246,13 +246,7 @@ static asynStatus readOctet(
 	if ( nBytesReadMax == 0 )
 		return asynSuccess;
 
-	//const char		*	pReadBuffer	= NULL;
-	//size_t				sReadBuffer	= 0;
-	// char			*	pReadBuffer	= pBuffer;
-	// size_t			sReadBuffer	= nBytesReadMax;
 	status	= pInterposeGenicam->GenicamToAscii( pasynUser, data, nBytesReadMax, pnRead, eomReason );
-
-//if ( pnRead ) return asynError; // test hack
 
 	if ( pnRead && *pnRead > 0 )
 	{
