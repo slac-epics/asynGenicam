@@ -1,2 +1,0 @@
-registrar(asynInterposeGenicamRegister)
-variable( DEBUG_GENICAM, int )

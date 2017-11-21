@@ -1,0 +1,2 @@
+registrar(asynGenicamRegister)
+variable( DEBUG_GENICAM, int )

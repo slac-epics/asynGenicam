@@ -1,4 +1,4 @@
-// asynInterposeGenicam.cpp
+// asynGenicam.cpp
 
 //
 // Author: Bruce Hill
@@ -25,7 +25,7 @@
 #include "asynDriver.h"
 #include "asynOctet.h"
 #include "asynShellCommands.h"
-#include "asynInterposeGenicam.h"
+#include "asynGenicam.h"
 #include "GenTL.h"
 #include "GenCpPacket.h"
 
@@ -38,12 +38,12 @@
 
 int		DEBUG_GENICAM	= 0;
 
-class asynInterposeGenicam
+class asynGenicam
 {
 //	Public member functions
 public:
-	asynInterposeGenicam( const char *	portName, int addr );
-	~asynInterposeGenicam( );
+	asynGenicam( const char *	portName, int addr );
+	~asynGenicam( );
 
 	asynStatus	AsciiToGenicam(	asynUser			*	pasynUser,
 								const char			*	data,
@@ -148,16 +148,16 @@ static asynOctet genicamOctetInterface =
 };
  
 extern "C" epicsShareFunc int
-asynInterposeGenicamConfig( const char *	portName, int addr )
+asynGenicamConfig( const char *	portName, int addr )
 {
     asynStatus			status;
     asynInterface	*	pasynOctet;
 
-	asynInterposeGenicam	*	pInterposeGenicam	= new asynInterposeGenicam( portName, addr );
+	asynGenicam	*	pInterposeGenicam	= new asynGenicam( portName, addr );
     status = pasynManager->interposeInterface(portName, addr, &pInterposeGenicam->m_octet, &pasynOctet );
     if ( status != asynSuccess || pasynOctet == NULL )
 	{
-        printf( "%s asynInterposeGenicamConfig failed.\n", portName );
+        printf( "%s asynGenicamConfig failed.\n", portName );
         delete pInterposeGenicam;
         return -1;
     }
@@ -174,9 +174,9 @@ static asynStatus writeOctet(
 	size_t					maxChars,
 	size_t				*	pnWritten )
 {
-	asynInterposeGenicam *	pInterposeGenicam	= reinterpret_cast<asynInterposeGenicam *>( ppvt );
+	asynGenicam *	pInterposeGenicam	= reinterpret_cast<asynGenicam *>( ppvt );
 	asynStatus				status			= asynSuccess;
-    static const char	*	functionName	= "asynInterposeGenicam  writeOctet";
+    static const char	*	functionName	= "asynGenicam  writeOctet";
 
 	asynPrint(	pasynUser, ASYN_TRACE_FLOW,
 				"%s: %s maxChars %zu: %s\n", functionName, pInterposeGenicam->m_portName, maxChars, data );
@@ -229,9 +229,9 @@ static asynStatus readOctet(
 	size_t			*	pnRead,
 	int				*	eomReason )
 {
-	asynInterposeGenicam *	pInterposeGenicam	= reinterpret_cast<asynInterposeGenicam *>( ppvt );
+	asynGenicam *	pInterposeGenicam	= reinterpret_cast<asynGenicam *>( ppvt );
 	asynStatus				status			= asynSuccess;
-    static const char	*	functionName	= "asynInterposeGenicam  readOctet";
+    static const char	*	functionName	= "asynGenicam  readOctet";
 
 	asynPrint(	pasynUser, ASYN_TRACE_FLOW,
 				"%s: %s nBytesReadMax %zu\n", functionName, pInterposeGenicam->m_portName, nBytesReadMax );
@@ -267,7 +267,7 @@ static asynStatus flushIt(
 	void			*	ppvt,
 	asynUser		*	pasynUser )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
     
     return pInterposeGenicam->m_pasynOctetDrv->flush(
         pInterposeGenicam->m_drvPvt, pasynUser );
@@ -280,7 +280,7 @@ static asynStatus registerInterruptUser(
 	void *userPvt,
 	void **registrarPvt )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->registerInterruptUser(
         pInterposeGenicam->m_drvPvt, pasynUser, callback, userPvt, registrarPvt );
@@ -291,7 +291,7 @@ static asynStatus cancelInterruptUser(
 	asynUser *pasynUser,
     void *registrarPvt )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)drvPvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)drvPvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->cancelInterruptUser(
         pInterposeGenicam->m_drvPvt, pasynUser, registrarPvt );
@@ -303,7 +303,7 @@ static asynStatus setInputEos(
     const char *eos,
 	int eoslen )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->setInputEos(
         pInterposeGenicam->m_drvPvt, pasynUser, eos, eoslen );
@@ -316,7 +316,7 @@ static asynStatus getInputEos(
 	int eossize,
 	int *eoslen )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->getInputEos(
         pInterposeGenicam->m_drvPvt, pasynUser, eos, eossize, eoslen );
@@ -328,7 +328,7 @@ static asynStatus setOutputEos(
     const char *eos,
 	int eoslen )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->setOutputEos(
         pInterposeGenicam->m_drvPvt, pasynUser, eos, eoslen );
@@ -341,7 +341,7 @@ static asynStatus getOutputEos(
 	int eossize,
 	int *eoslen )
 {
-    asynInterposeGenicam *pInterposeGenicam = (asynInterposeGenicam *)ppvt;
+    asynGenicam *pInterposeGenicam = (asynGenicam *)ppvt;
 
     return pInterposeGenicam->m_pasynOctetDrv->getOutputEos(
         pInterposeGenicam->m_drvPvt, pasynUser, eos, eossize, eoslen );
@@ -349,11 +349,11 @@ static asynStatus getOutputEos(
 
 
 //
-// asynInterposeGenicam class member functions
+// asynGenicam class member functions
 //
 
-/// asynInterposeGenicam constructor
-asynInterposeGenicam::asynInterposeGenicam( const char *	portName, int addr )
+/// asynGenicam constructor
+asynGenicam::asynGenicam( const char *	portName, int addr )
     :	m_octet(							),
     	m_pasynOctetDrv(			NULL	),
     	m_drvPvt(					NULL	),
@@ -375,20 +375,20 @@ asynInterposeGenicam::asynInterposeGenicam( const char *	portName, int addr )
     m_octet.drvPvt = this;
 }
 
-asynInterposeGenicam::~asynInterposeGenicam()
+asynGenicam::~asynGenicam()
 {
 	free( (void *)m_portName );
 	m_portName = NULL;
 }
 
-asynStatus	asynInterposeGenicam::AsciiToGenicam(
+asynStatus	asynGenicam::AsciiToGenicam(
 	asynUser			*	pasynUser,
     const char			*	data,
 	size_t					maxChars,
 	const char			**	ppSendBufferRet,
 	size_t				*	psSendBufferRet	)
 {
-    static const char	*	functionName	= "asynInterposeGenicam::AsciiToGenicam";
+    static const char	*	functionName	= "asynGenicam::AsciiToGenicam";
 	uint16_t				requestId		= 0xFFFF;
 	
 	GENCP_STATUS			genStatus;
@@ -568,7 +568,7 @@ asynStatus	asynInterposeGenicam::AsciiToGenicam(
 	return asynSuccess;
 }
 
-asynStatus	asynInterposeGenicam::GenicamToAscii(
+asynStatus	asynGenicam::GenicamToAscii(
 	asynUser			*	pasynUser,
 	char				*	pBuffer,
 	size_t					nBytesReadMax,
@@ -576,7 +576,7 @@ asynStatus	asynInterposeGenicam::GenicamToAscii(
 	int					*	eomReason	)
 {
 	asynStatus				status			= asynSuccess;
-    static const char	*	functionName	= "asynInterposeGenicam::GenicamToAscii";
+    static const char	*	functionName	= "asynGenicam::GenicamToAscii";
 	char					genCpResponseBuffer[GENCP_RESPONSE_MAX];
     
 	if ( pnRead )
@@ -829,36 +829,36 @@ asynStatus	asynInterposeGenicam::GenicamToAscii(
 }
 
 
-/* register asynInterposeGenicamConfig*/
-static const iocshArg asynInterposeGenicamConfigArg0 =
+/* register asynGenicamConfig*/
+static const iocshArg asynGenicamConfigArg0 =
     { "portName", iocshArgString };
-static const iocshArg asynInterposeGenicamConfigArg1 =
+static const iocshArg asynGenicamConfigArg1 =
     { "addr", iocshArgInt };
-static const iocshArg *asynInterposeGenicamConfigArgs[] =
+static const iocshArg *asynGenicamConfigArgs[] =
 {
-    &asynInterposeGenicamConfigArg0,
-    &asynInterposeGenicamConfigArg1,
+    &asynGenicamConfigArg0,
+    &asynGenicamConfigArg1,
 };
-static const iocshFuncDef asynInterposeGenicamConfigFuncDef =
-{	"asynInterposeGenicamConfig",
+static const iocshFuncDef asynGenicamConfigFuncDef =
+{	"asynGenicamConfig",
 	2,
-	asynInterposeGenicamConfigArgs
+	asynGenicamConfigArgs
 };
-static void asynInterposeGenicamConfigCallFunc( const iocshArgBuf *args)
+static void asynGenicamConfigCallFunc( const iocshArgBuf *args)
 {
-    asynInterposeGenicamConfig( args[0].sval, args[1].ival );
+    asynGenicamConfig( args[0].sval, args[1].ival );
 }
 
-static void asynInterposeGenicamRegister(void)
+static void asynGenicamRegister(void)
 {
     static int firstTime = 1;
     if ( firstTime )
 	{
         firstTime = 0;
-        iocshRegister( &asynInterposeGenicamConfigFuncDef,
-            			asynInterposeGenicamConfigCallFunc );
+        iocshRegister( &asynGenicamConfigFuncDef,
+            			asynGenicamConfigCallFunc );
     }
 }
 
-epicsExportRegistrar( asynInterposeGenicamRegister );
+epicsExportRegistrar( asynGenicamRegister );
 epicsExportAddress( int, DEBUG_GENICAM );

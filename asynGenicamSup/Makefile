@@ -3,19 +3,19 @@ include $(TOP)/configure/CONFIG
 #=======================================
 
 # Build asynGenicam as a library for an IOC:
-LIBRARY_IOC += asynInterposeGenicam
+LIBRARY_IOC += asynGenicam
 
 # Library Source files
-asynInterposeGenicam_SRCS += asynInterposeGenicam.cpp
-asynInterposeGenicam_SRCS += GenCpPacket.cpp
-#asynInterposeGenicam_SRCS += GenCpTool.cpp
+asynGenicam_SRCS += asynGenicam.cpp
+asynGenicam_SRCS += GenCpPacket.cpp
+#asynGenicam_SRCS += GenCpTool.cpp
 
 # Link with the asyn and base libraries
-asynInterposeGenicam_LIBS += asyn
-asynInterposeGenicam_LIBS += $(EPICS_BASE_IOC_LIBS)
+asynGenicam_LIBS += asyn
+asynGenicam_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 # Install .dbd and .db files
-DBD += asynInterposeGenicam.dbd
+DBD += asynGenicam.dbd
 
 #=======================================
 include $(TOP)/configure/RULES

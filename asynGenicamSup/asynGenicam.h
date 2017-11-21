@@ -1,4 +1,4 @@
-/*asynInterposeGenicam.h*/
+/*asynGenicam.h*/
 /***********************************************************************
 * Copyright (c) 2002 The University of Chicago, as Operator of Argonne
 * National Laboratory, and the Regents of the University of
@@ -8,8 +8,8 @@
 * found in file LICENSE that is included with this distribution.
 ***********************************************************************/
 
-#ifndef asynInterposeGenicam_H
-#define asynInterposeGenicam_H
+#ifndef asynGenicam_H
+#define asynGenicam_H
 
 #include <shareLib.h>
 
@@ -26,10 +26,10 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-epicsShareFunc int asynInterposeGenicamConfig( const char *	portName, int addr );
+epicsShareFunc int asynGenicamConfig( const char *	portName, int addr );
 
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
-#endif /* asynInterposeGenicam_H */
+#endif /* asynGenicam_H */
