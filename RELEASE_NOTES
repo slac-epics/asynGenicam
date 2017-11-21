@@ -1,7 +1,10 @@
 #
 # RELEASE Notes for asynGenicam
 #
-R1.0.0	2017-11-20	Bruce Hill
+R1.0.1	2017-11-20	Bruce Hill
+	Changed lib, dbd, and src names from asynInterposeGenicam to asynGenicam
+
+R1.0.0	2017-11-11	Bruce Hill
 	First release of asynGenicam module.
 	Allows introducing an asynGenicam interpose module that translates
 	a streamdevice compatible ascii protocol to Genicam packets and
