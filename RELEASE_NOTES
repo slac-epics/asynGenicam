@@ -1,0 +1,10 @@
+#
+# RELEASE Notes for asynGenicam
+#
+R1.0.0	2017-11-20	Bruce Hill
+	First release of asynGenicam module.
+	Allows introducing an asynGenicam interpose module that translates
+	a streamdevice compatible ascii protocol to Genicam packets and
+	back to ascii for the replies.
+	This version is specific to the EDT framegrabber serial interface.
+
