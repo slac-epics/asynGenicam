@@ -1,6 +1,9 @@
 #
 # RELEASE Notes for asynGenicam
 #
+R1.0.2	2018-1-29	Bruce Hill
+	Updated to asyn/R4.32-1.0.0
+
 R1.0.1	2017-11-20	Bruce Hill
 	Changed lib, dbd, and src names from asynInterposeGenicam to asynGenicam
 
