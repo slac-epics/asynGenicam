@@ -29,12 +29,19 @@
 #include "GenTL.h"
 #include "GenCpPacket.h"
 
-#ifndef FALSE
-#define	FALSE 0
-#endif
-#ifndef TRUE
-#define	TRUE 1
-#endif
+//#ifndef FALSE
+//#define	FALSE 0
+//#endif
+//#ifndef TRUE
+//#define	TRUE 1
+//#endif
+
+//	TODO: Wrap debug printf's w/ timestamp
+//	time_t	t;
+//	struct tm tm;
+//	time(&t);
+//	localtime_r(&t, &tm);
+//	strftime( buffer, sBuffer, "%Y/%m/%d %H:%M:%S", &tm );
 
 int		DEBUG_GENICAM	= 0;
 
@@ -178,6 +185,8 @@ static asynStatus writeOctet(
 	asynStatus				status			= asynSuccess;
     static const char	*	functionName	= "asynGenicam  writeOctet";
 
+	if ( DEBUG_GENICAM >= 3 )
+		printf( "%s: %s Write %zu: %s\n", functionName, pInterposeGenicam->m_portName, strlen(data), data );
 	asynPrint(	pasynUser, ASYN_TRACE_FLOW,
 				"%s: %s maxChars %zu: %s\n", functionName, pInterposeGenicam->m_portName, maxChars, data );
 
@@ -186,6 +195,21 @@ static asynStatus writeOctet(
 
 	if ( maxChars == 0 )
 		return asynSuccess;
+
+	// See if we need to flush input from prior error
+	if ( pInterposeGenicam->m_fInputFlushNeeded )
+	{
+		size_t	nRead	= 0;
+		int		eomReason;
+		char	flushBuffer[256];
+		pInterposeGenicam->m_pasynOctetDrv->read( pInterposeGenicam->m_drvPvt,
+				pasynUser, flushBuffer, 256, &nRead, &eomReason );
+		pInterposeGenicam->m_fInputFlushNeeded = false;
+		if ( DEBUG_GENICAM >= 3 )
+			printf( "%s: %s Flushed %zu bytes from input\n", functionName,
+					pInterposeGenicam->m_portName, nRead );
+	}
+
 	const char		*	pSendBuffer	= NULL;
 	size_t				sSendBuffer	= 0;
 	status	= pInterposeGenicam->AsciiToGenicam( pasynUser, data, maxChars,
@@ -214,7 +238,7 @@ static asynStatus writeOctet(
 							"%s: %s write error: %s\n",
 							functionName, pInterposeGenicam->m_portName, strerror(errno)	);
 			status = asynError;
-			pInterposeGenicam->m_fInputFlushNeeded = TRUE;
+			pInterposeGenicam->m_fInputFlushNeeded = true;
 		}
 	}
 
@@ -359,7 +383,7 @@ asynGenicam::asynGenicam( const char *	portName, int addr )
     	m_drvPvt(					NULL	),
     	m_portName(					NULL	),
     	m_addr(						addr	),
-		m_fInputFlushNeeded(		FALSE	),			
+		m_fInputFlushNeeded(		false	),			
 		m_GenCpRegAddr(				0LL		),			
 		m_GenCpRequestId(			0		),
 		m_GenCpResponseType(		0		),
@@ -391,7 +415,7 @@ asynStatus	asynGenicam::AsciiToGenicam(
     static const char	*	functionName	= "asynGenicam::AsciiToGenicam";
 	uint16_t				requestId		= 0xFFFF;
 	
-	GENCP_STATUS			genStatus;
+	GENCP_STATUS			genStatus		= 0;
 	char					cGetSet;	// '?' is a Get, '=' is a Set
 	unsigned int			cmdCount;
 	const char			*	pString;
@@ -545,12 +569,12 @@ asynStatus	asynGenicam::AsciiToGenicam(
 	}
 	m_GenCpRegAddr = regAddr;
 
-	if ( scanCount == -1 )
+	if ( scanCount == -1 || genStatus != 0 )
 	{
 		epicsSnprintf(	pasynUser->errorMessage, pasynUser->errorMessageSize,
 						"%s: %s Invalid GenCP command: %s\n",
 						functionName, m_portName, data	);
-		m_fInputFlushNeeded = TRUE;
+		m_fInputFlushNeeded = true;
 		return asynError;
 	}
 
@@ -578,7 +602,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 	asynStatus				status			= asynSuccess;
     static const char	*	functionName	= "asynGenicam::GenicamToAscii";
 	char					genCpResponseBuffer[GENCP_RESPONSE_MAX];
-    
+
 	if ( pnRead )
 		*pnRead = 0;
 	if ( eomReason )
@@ -597,7 +621,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 	size_t			nBytesPending = strlen( m_GenCpResponsePending );
 	if ( nBytesPending > 0 )
 	{
-		if ( DEBUG_GENICAM >= 3 ) printf(
+		if ( DEBUG_GENICAM >= 2 ) printf(
 				"%s Entry: %s nBytesPending %zu: %s\n", functionName, m_portName, nBytesPending, m_GenCpResponsePending );
 		// Unable to return entire response on last call
 		// Typically because streamdevice sets nBytesReadMax to 1 on first call
@@ -642,55 +666,46 @@ asynStatus	asynGenicam::GenicamToAscii(
 	}
 
 	size_t		nRead	= 0;
-	for (;;)
+	if ( DEBUG_GENICAM >= 4 )
+		printf( "%s: %s nBytesReadMax %zu, sReadBuffer %zu, timeout %e ...\n",
+				functionName, m_portName, nBytesReadMax, sReadBuffer, pasynUser->timeout );
+
+	if ( pReadBuffer != NULL && sReadBuffer > 0 )
+		status = m_pasynOctetDrv->read(	m_drvPvt, pasynUser, pReadBuffer, sReadBuffer, &nRead, eomReason );
+	if( nRead > 0 )
 	{
+		if ( DEBUG_GENICAM >= 3 )
+			printf( "%s: %s Read %zu bytes ...\n", functionName, m_portName, nRead );
+	}
+	else
+	{
+		if ( pnRead )
+			*pnRead = 0;
 		if ( DEBUG_GENICAM >= 4 )
-			printf( "%s: %s nBytesReadMax %zu, sReadBuffer %zu, timeout %e ...\n",
-					functionName, m_portName, nBytesReadMax, sReadBuffer, pasynUser->timeout );
+			printf( "%s: %s Timeout: nRead=0\n", functionName, m_portName );
+	}
 
-		if ( pReadBuffer != NULL && sReadBuffer > 0 )
-    	status = m_pasynOctetDrv->read(	m_drvPvt, pasynUser, pReadBuffer, sReadBuffer, &nRead, eomReason );
-		if( nRead > 0 )
-		{
-			if ( DEBUG_GENICAM >= 3 )
-				printf( "%s: %s Read %zu bytes ...\n", functionName, m_portName, nRead );
-		}
-		else
-		{
-			if ( pnRead )
-				*pnRead = 0;
-            if ( DEBUG_GENICAM >= 4 )
-                printf( "%s: %s nRead=0 ...\n", functionName, m_portName );
-
-            return asynSuccess;
-        }
-
-		// If we read something
-		if( nRead > 0 )
-			break;			/* If we have something, we're done. */
-
-		// Handle errors
-		if (	(nRead < 0)
-			&&	(errno != EWOULDBLOCK)
-			&&	(errno != EINTR)
-			&&	(errno != EAGAIN) )
-		{
-			epicsSnprintf(	pasynUser->errorMessage, pasynUser->errorMessageSize,
-							"%s: %s read error: %s\n",
-							functionName, m_portName, strerror(errno)	);
-			status = asynError;
-			m_fInputFlushNeeded = true;
-			break;		/* If we have an error, we're done. */
-		}
-		if ( pasynUser->timeout > 0 )
-			break;			/* If we aren't waiting forever, we're done. */
-	}	// end forever loop
-
-	if ( nRead == 0 && (pasynUser->timeout > 0) && (status == asynSuccess))	/* If we don't have anything, not even an error	*/
+	// Handle errors
+	if (	(status != asynSuccess)
+		&&	(errno != EWOULDBLOCK)
+		&&	(errno != EINTR)
+		&&	(errno != EAGAIN) )
 	{
-		status = asynTimeout;					/* then we must have timed out.					*/
+		epicsSnprintf(	pasynUser->errorMessage, pasynUser->errorMessageSize,
+						"%s: %s read error: %s\n",
+						functionName, m_portName, strerror(errno)	);
+		m_fInputFlushNeeded = true;
+	}
+
+	//if ( nRead == 0 && (pasynUser->timeout > 0) ) /* If we don't have anything, not even an error	*/
+	if ( nRead == 0 )				/* If we don't have anything */
+	{
+		status = asynTimeout;		/* then we must have timed out.					*/
 		if ( eomReason )
 			*eomReason = ASYN_EOM_EOS;
+		if ( pasynUser->timeout > 0 )
+			m_fInputFlushNeeded = true;
+		return status;
 	}
 
 	{
@@ -712,7 +727,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 			snprintf( genCpResponseBuffer, GENCP_RESPONSE_MAX, "ERR %d (0x%X)\n", genStatus, genStatus );
 			fprintf( stderr, "%s: ReadMemString Validate Error: %d (0x%X)\n", functionName, genStatus, genStatus );
 			m_fInputFlushNeeded = true;
-			return asynError;
+			status = asynError;
 		}
 		strncpy( genCpResponseBuffer, "OK\n", GENCP_RESPONSE_MAX );
 		break;
@@ -725,7 +740,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 			snprintf( genCpResponseBuffer, GENCP_RESPONSE_MAX, "ERR %d (0x%X)\n", genStatus, genStatus );
 			fprintf( stderr, "%s: ReadMemString Validate Error: %d (0x%X)\n", functionName, genStatus, genStatus );
 			m_fInputFlushNeeded = true;
-			return asynError;
+			status = asynError;
 		}
 		strcat( genCpResponseBuffer, "\n" );
 		break;
@@ -758,7 +773,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 			snprintf( genCpResponseBuffer, GENCP_RESPONSE_MAX, "ERR %d (0x%X)\n", genStatus, genStatus );
 			fprintf( stderr, "%s: Uint ProcessReadMem Error: %d (0x%X)\n", functionName, genStatus, genStatus );
 			m_fInputFlushNeeded = true;
-			return asynError;
+			status = asynError;
 		}
 		break;
 	case GENCP_TY_RESP_FLOAT:
@@ -784,13 +799,13 @@ asynStatus	asynGenicam::GenicamToAscii(
 			snprintf( genCpResponseBuffer, GENCP_RESPONSE_MAX, "ERR %d (0x%X)\n", genStatus, genStatus );
 			fprintf( stderr, "%s: Uint ProcessReadMem Error: %d (0x%X)\n", functionName, genStatus, genStatus );
 			m_fInputFlushNeeded = true;
-			return asynError;
+			status = asynError;
 		}
 		break;
 	case GENCP_TY_RESP_INT:
 	default:
 		fprintf( stderr, "%s: Unsupported response type: %d\n", functionName, m_GenCpResponseType );
-		return asynError;
+		status = asynError;
 		break;
 	}
 	}
@@ -800,7 +815,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 	m_GenCpResponsePending[0] = '\0';
 	if ( nBytesResponse > nBytesReadMax )
 	{
-		if ( DEBUG_GENICAM >= 3 ) printf(
+		if ( DEBUG_GENICAM >= 2 ) printf(
 				"%s Exit: %s Rtn %zu, pend %zu: %s\n", functionName, m_portName,
 				nBytesReadMax, nBytesResponse - nBytesReadMax, m_GenCpResponsePending );
 		// Copy requested number of characters to return buffer
@@ -814,14 +829,28 @@ asynStatus	asynGenicam::GenicamToAscii(
 	}
 	else
 	{
-		if ( DEBUG_GENICAM >= 3 ) printf(
-				"%s Exit: %s Rtn %zu, endOfmsg: %s\n", functionName, m_portName, nBytesResponse, m_GenCpResponsePending );
-		// Copy response to return buffer
-		strncpy( pBuffer, genCpResponseBuffer, nBytesReadMax );
-		if ( pnRead )
-			*pnRead = nBytesResponse;
-		if ( eomReason )
-			*eomReason = ASYN_EOM_EOS | ASYN_EOM_END;
+		if ( status != asynSuccess )
+		{
+			if ( m_fInputFlushNeeded )
+			{
+				char	flushBuffer[256];
+				m_pasynOctetDrv->read(	m_drvPvt, pasynUser, flushBuffer, 256, &nRead, eomReason );
+				m_fInputFlushNeeded = false;
+				if ( DEBUG_GENICAM >= 3 )
+					printf( "%s Exit: %s Flushed %zu bytes from input\n", functionName, m_portName, nBytesResponse );
+			}
+		}
+		else
+		{
+			if ( DEBUG_GENICAM >= 3 ) printf(
+					"%s Exit: %s Rtn %zu, endOfmsg: %s\n", functionName, m_portName, nBytesResponse, m_GenCpResponsePending );
+			// Copy response to return buffer
+			strncpy( pBuffer, genCpResponseBuffer, nBytesReadMax );
+			if ( pnRead )
+				*pnRead = nBytesResponse;
+			if ( eomReason )
+				*eomReason = ASYN_EOM_EOS | ASYN_EOM_END;
+		}
 	}
 	}
 
