@@ -230,7 +230,7 @@ static asynStatus writeOctet(
 						"%s: sent %zu pkt to %s for: %s\n",
 						functionName, sSendBuffer, pInterposeGenicam->m_portName, data	);
 			asynPrintIO(	pasynUser, ASYN_TRACEIO_DRIVER, data, *pnWritten,
-							"%s: %s wrote %zu\n", functionName, pInterposeGenicam->m_portName, sSendBuffer );
+							"%s: %s wrote %zu: ", functionName, pInterposeGenicam->m_portName, sSendBuffer );
 		}
 		else
 		{
@@ -277,7 +277,7 @@ static asynStatus readOctet(
 		if ( DEBUG_GENICAM >= 3 )
 			printf( "%s: %s Read %zu: %s\n", functionName, pInterposeGenicam->m_portName, *pnRead, data );
 		asynPrintIO(	pasynUser, ASYN_TRACEIO_DRIVER, data, *pnRead,
-						"%s: %s read %zu\n",
+						"%s: %s read %zu: ",
 						functionName, pInterposeGenicam->m_portName, *pnRead );
 		asynPrint(		pasynUser, ASYN_TRACE_FLOW,
 						"%s: %s read %zu, status %d, Buffer: %s\n",
@@ -635,7 +635,7 @@ asynStatus	asynGenicam::GenicamToAscii(
 		if ( DEBUG_GENICAM >= 3 )
 			printf( "%s: %s Read pending %zu: %s\n", functionName, m_portName, nBytesPending, pBuffer );
 		asynPrintIO(	pasynUser, ASYN_TRACEIO_DRIVER, pBuffer, nBytesPending,
-						"%s: %s read %zu of %zu\n",
+						"%s: %s read %zu of %zu: ",
 						functionName, m_portName, nBytesPending, nBytesPending );
 		asynPrint(	pasynUser, ASYN_TRACE_FLOW,
 					"%s: %s read pending %zu, status %d, Buffer: %s\n",
