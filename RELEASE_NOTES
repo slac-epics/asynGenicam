@@ -1,6 +1,11 @@
 #
 # RELEASE Notes for asynGenicam
 #
+R1.2.0	2021-10-29 Bruce Hill
+	Update to asyn/R4.39-1.0.0
+	Fix documentation for st.cmd config
+	Don't need \n in trace msgs
+
 R1.1.1	2021-04-23 Bruce Hill
 	Update to asyn/R4.39-0.0.1
 
