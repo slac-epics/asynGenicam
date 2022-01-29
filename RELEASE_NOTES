@@ -1,6 +1,9 @@
 #
 # RELEASE Notes for asynGenicam
 #
+R1.2.1	2022-01-29 Bruce Hill
+	Update to asyn/R4.39-1.0.1
+
 R1.2.0	2021-10-29 Bruce Hill
 	Update to asyn/R4.39-1.0.0
 	Fix documentation for st.cmd config
